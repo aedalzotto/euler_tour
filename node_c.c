@@ -1,118 +1,72 @@
 #include <api.h>
 #include <stdbool.h>
+#include "euler.h"
 
-#define THIS_NODE 3
-#define NODE_N 3
 
+/* Node Model */
+#define THIS_NODE NODE_C
 // Number of neighbors
 #define N_ADJ 2
-
 // Edges weight           to: a  b
 unsigned int weight[N_ADJ] = {0, 0};
 
+
+//DONT CHANGE
 unsigned int counterf = 0;
 unsigned int node_i = 0;
 unsigned int backtracks = 0;
+
 Message msg;
 
 void next_hop()
 {
-    msg.msg[1] = THIS_NODE; // Update source
+    MSG_SRC = THIS_NODE;
     if(N_ADJ - counterf - backtracks > 1)
-        msg.msg[3] = THIS_NODE; // Backtrack to this node
+        BK_ADDR = THIS_NODE;
 
     if(N_ADJ - counterf - backtracks){ // Send Forward
-        msg.msg[0] = 1; // Forward
-        msg.msg[2]--;   // Tunue--
+        MSG_OP = FORWARD;
+        TUNUE--;
         for(int i = 0; i < N_ADJ; i++){
-            if(!weight[i]){     // Find first unused edge
+            if(!weight[i]){
                 weight[i] = ++counterf;
-
-                /**
-                 * Node identified to array
-                 * std::map with std::find to make it generic
-                 */
-                switch(i){
-                case 0:
-                    Echo("Forwarding to A");
-                    Send(&msg, node_a);
-                    break;
-                case 1:
-                    Echo("Forwarding to B");
-                    Send(&msg, node_b);
-                    break;
-                }
+                Echo(fwd_msg[atop[THIS_NODE][i]]);
+                Send(&msg, P[atop[THIS_NODE][i]]);
                 break;
             }
         }
     } else { // Send Backtrack
-        if(!msg.msg[2]){ // 0 available edges
-            msg.msg[0] = 0;
-            Echo("No more unused edges. Exiting.");
-            Send(&msg, manager);    // Tell the manager to exit all nodes
-            return;
-        }
-        msg.msg[0] = -1;    // Backtrack instruction
-        char buffer[20] = "Backtracking to ";
-        buffer[17] = 40+msg.msg[3];
-        Echo(buffer);
-        switch(msg.msg[3]){
-        case 1:
-            Send(&msg, node_a);
-            break;
-        case 2:
-            Send(&msg, node_b);
-            break;
-        case 3:
-            Send(&msg, node_c);
-            break;
-        } 
+        MSG_OP = BACKTRACK;
+        Echo(bkt_msg[BK_ADDR]);
+        Send(&msg, P[BK_ADDR]);
     }
 }
 
 
 int main()
 {    
-    Echo("Starting node C");
-
+    Echo(start_msg[THIS_NODE]);
     while(true){
-        //Try to read from all nodes + manager
-        while(true) {
-            for(int i = 0; i <= NODE_N; i++) {
-                if(SystemCall(READPIPE, (unsigned int*)&msg, i, 0))
-                    goto read_ok;
-            }
-        }
+        while(!read_all(THIS_NODE, &msg));
 
-    read_ok:
-        if(!msg.msg[0]){        // Exit this node
-            Echo("Node C exiting");
+        if(!MSG_OP){        // Exit
+            Echo(exit_msg[THIS_NODE]);
             exit();
-        } else if(msg.msg[0]>0){ // Forward to this node
-            /**
-             * Manual translate node number to array number
-             * std::map from c++ would be useful with std::find
-             */
-            switch(msg.msg[1]){ // Source node
-            case 0: // From main
-                Echo("Received from main. Start at C.");
-                break;
-            case 1: // From node a
-                Echo("Received from A.");
-                weight[0] = ++counterf;
-                break;
-            case 3: // From node c
-                Echo("Received from B.");
-                weight[1] = ++counterf;
-                break;
-            }
+        } else if(!TUNUE){
+            MSG_OP = EXIT;
+            Echo("No more unused edges. Exiting.");
+            Send(&msg, P[0]);
+        } else if(MSG_OP == FORWARD){
+            Echo(rcv_msg[MSG_SRC]);
+            if(MSG_SRC)
+                weight[ntoa[THIS_NODE][MSG_SRC]] = ++counterf;
             next_hop();
-        } else { // Backtrack to this node
-            Echo("Received backtrack request.");
+        } else { // Backtrack
             // Find backtracked edge
+            Echo(bkt_msg[MSG_SRC]);
             int top = 0;
             for(int i = 0; i < N_ADJ; i++){
-                if(weight[i]>weight[top]) // Last edge sent
+                if(weight[i]>weight[top])
                     top = i;
             }
             weight[top] = N_ADJ - backtracks;
@@ -120,5 +74,4 @@ int main()
             next_hop();
         }
     }
-
 }
