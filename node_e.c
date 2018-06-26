@@ -4,10 +4,10 @@
 
 
 /* Node Model */
-#define THIS_NODE NODE_B
+#define THIS_NODE NODE_E
 // Number of neighbors
 #define N_ADJ 2
-// Edges weight           to: a  c
+// Edges weight           to: c  d
 unsigned int weight[N_ADJ] = {0, 0};
 
 

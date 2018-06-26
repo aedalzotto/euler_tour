@@ -54,6 +54,7 @@ int main()
             exit();
         } else if(!TUNUE){
             MSG_OP = EXIT;
+            MSG_SRC = THIS_NODE;
             Echo("No more unused edges. Exiting.");
             Send(&msg, P[0]);
         } else if(MSG_OP == FORWARD){

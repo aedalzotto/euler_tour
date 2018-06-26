@@ -6,9 +6,9 @@
 /* Node Model */
 #define THIS_NODE NODE_C
 // Number of neighbors
-#define N_ADJ 2
-// Edges weight           to: a  b
-unsigned int weight[N_ADJ] = {0, 0};
+#define N_ADJ 4
+// Edges weight           to: a  b  d  e
+unsigned int weight[N_ADJ] = {0, 0, 0, 0};
 
 
 //DONT CHANGE
@@ -54,6 +54,7 @@ int main()
             exit();
         } else if(!TUNUE){
             MSG_OP = EXIT;
+            MSG_SRC = THIS_NODE;
             Echo("No more unused edges. Exiting.");
             Send(&msg, P[0]);
         } else if(MSG_OP == FORWARD){

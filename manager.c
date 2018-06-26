@@ -3,7 +3,7 @@
 #include "euler.h"
 
 bool path_only = false;
-unsigned int start=NODE_B, end=NODE_C;
+unsigned int start=NODE_A, end=NODE_E;
 
 /**
  * Verifica se o grafo é euleriano
